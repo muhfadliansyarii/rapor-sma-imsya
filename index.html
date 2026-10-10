@@ -7,6 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Supabase Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; }
     </style>
@@ -55,13 +57,13 @@
                         class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-teal-600 focus:outline-none text-sm">
                 </div>
                 <div id="login-error" class="hidden text-red-600 text-xs text-center font-medium bg-red-50 p-2 rounded"></div>
-                <button type="submit" class="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-100 font-semibold rounded-lg shadow transition text-sm">
+                <button type="submit" id="login-btn" class="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-100 font-semibold rounded-lg shadow transition text-sm">
                     MASUK & CEK RAPOR
                 </button>
             </form>
         </div>
 
-        <!-- HALAMAN DASHBOARD SISWA (TERSEMBUNYI AWALNYA) -->
+        <!-- HALAMAN DASHBOARD SISWA -->
         <div id="student-dashboard" class="hidden w-full max-w-lg bg-white rounded-2xl shadow-xl border border-stone-200 p-8 text-center">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 🎓
@@ -106,12 +108,12 @@
             </div>
         </div>
 
-        <!-- HALAMAN DASHBOARD ADMIN (TERSEMBUNYI) -->
+        <!-- HALAMAN DASHBOARD ADMIN -->
         <div id="admin-dashboard" class="hidden w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-stone-200 p-6 md:p-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b border-stone-200 gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-emerald-900">Dashboard Administrator</h2>
-                    <p class="text-xs text-stone-500">Kelola data siswa dan link Google Drive rapor.</p>
+                    <h2 class="text-xl font-bold text-emerald-900">Dashboard Administrator (Cloud Database)</h2>
+                    <p class="text-xs text-stone-500">Kelola data siswa yang tersimpan secara online di Supabase.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="exportTemplateExcel()" class="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 py-2 rounded-lg font-medium border">
@@ -123,7 +125,7 @@
                 </div>
             </div>
 
-            <!-- STATISTIK KECIL -->
+            <!-- STATISTIK -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
                     <p class="text-xs text-emerald-700 font-semibold uppercase">Total Siswa Terdaftar</p>
@@ -135,42 +137,42 @@
                 </div>
             </div>
 
-            <!-- IMPORT EXCEL & TAMBAH MANUAL -->
+            <!-- FORM & IMPORT -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
                     <h3 class="font-bold text-sm text-stone-800 mb-2">Import Data dari Excel (.xlsx / .csv)</h3>
                     <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" onchange="previewExcel(event)"
                         class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 mb-2">
-                    <p class="text-[11px] text-stone-500 italic">Kolom wajib: Nama Siswa, NISN, Tanggal Lahir (YYYY-MM-DD), Link PDF</p>
+                    <p class="text-[11px] text-stone-500 italic">Kolom wajib: NamaSiswa, NISN, TanggalLahir, LinkPDF</p>
                 </div>
 
                 <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
                     <h3 class="font-bold text-sm text-stone-800 mb-2" id="form-title-text">Tambah Siswa Manual</h3>
                     <form onsubmit="saveManualStudent(event)" class="space-y-2">
-                        <input type="hidden" id="edit-index" value="-1">
+                        <input type="hidden" id="edit-id" value="">
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="m-name" required placeholder="Nama Lengkap" class="px-3 py-1.5 rounded border text-xs">
-                            <input type="text" id="m-nisn" required placeholder="NISN" class="px-3 py-1.5 rounded border text-xs">
+                            <input type="text" id="m-name" required placeholder="Nama Lengkap" class="px-3 py-1.5 rounded border text-xs bg-white">
+                            <input type="text" id="m-nisn" required placeholder="NISN" class="px-3 py-1.5 rounded border text-xs bg-white">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="m-dob" required class="px-3 py-1.5 rounded border text-xs">
-                            <input type="url" id="m-link" required placeholder="Link Google Drive PDF" class="px-3 py-1.5 rounded border text-xs">
+                            <input type="date" id="m-dob" required class="px-3 py-1.5 rounded border text-xs bg-white">
+                            <input type="url" id="m-link" required placeholder="Link Google Drive PDF" class="px-3 py-1.5 rounded border text-xs bg-white">
                         </div>
                         <div class="flex justify-end gap-2 pt-1">
                             <button type="button" onclick="resetManualForm()" class="px-3 py-1 text-xs bg-stone-200 rounded">Batal</button>
-                            <button type="submit" class="px-3 py-1 text-xs bg-emerald-800 text-white rounded">Simpan Data</button>
+                            <button type="submit" class="px-3 py-1 text-xs bg-emerald-800 text-white rounded">Simpan ke Cloud</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- TABEL DATA SISWA -->
+            <!-- TABEL DATA -->
             <div>
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-sm text-stone-800">Daftar Data Siswa</h3>
-                    <input type="text" id="search-box" oninput="renderTable()" placeholder="Cari nama / NISN..." class="px-3 py-1.5 text-xs rounded border border-stone-300 w-60">
+                    <h3 class="font-bold text-sm text-stone-800">Daftar Data Siswa di Cloud</h3>
+                    <input type="text" id="search-box" oninput="renderTable()" placeholder="Cari nama / NISN..." class="px-3 py-1.5 text-xs rounded border border-stone-300 w-60 bg-white">
                 </div>
-                <div class="overflow-x-auto border border-stone-200 rounded-xl">
+                <div class="overflow-x-auto border border-stone-200 rounded-xl bg-white">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-stone-100 text-stone-700 border-b border-stone-200">
@@ -183,7 +185,7 @@
                             </tr>
                         </thead>
                         <tbody id="student-table-body">
-                            <!-- Data dimuat dinamis -->
+                            <tr><td colspan="6" class="p-4 text-center text-stone-400">Memuat data dari database...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -196,40 +198,59 @@
         &copy; 2026 SMA IT Imam Syafii 2 Pekanbaru. All rights reserved.
     </footer>
 
-    <!-- LOGIKA JAVASCRIPT -->
+    <!-- KONEKSI SUPABASE & LOGIKA UTAMA -->
     <script>
-        // Database lokal (menggunakan localStorage)
-        let students = JSON.parse(localStorage.getItem('smait_students')) || [
-            { name: "Ahmad Fauzan", nisn: "0081234561", dob: "2008-05-12", pdfLink: "https://drive.google.com/file/d/sample1/view" },
-            { name: "Fatimah Azzahra", nisn: "0081234562", dob: "2008-08-20", pdfLink: "https://drive.google.com/file/d/sample2/view" }
-        ];
+        // Kredensial Supabase Anda
+        const SUPABASE_URL = "https://zhzfklogfcwkwfoqbaoj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_X9wgSWQKO3McfYA7p2YnEA_5rCFA0ei";
 
-        function saveData() {
-            localStorage.setItem('smait_students', JSON.stringify(students));
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let studentsCache = [];
+
+        // Ambil data dari database Supabase saat web dibuka
+        async function fetchStudents() {
+            const { data, error } = await supabaseClient.from('students').select('*').order('name', { ascending: true });
+            if (error) {
+                console.error('Gagal mengambil data:', error);
+                return;
+            }
+            studentsCache = data || [];
             updateStats();
+            renderTable();
         }
 
         function updateStats() {
-            document.getElementById('stat-total').innerText = students.length;
-            const valid = students.filter(s => s.pdfLink && s.pdfLink.trim() !== "").length;
+            document.getElementById('stat-total').innerText = studentsCache.length;
+            const valid = studentsCache.filter(s => s.pdf_link && s.pdf_link.trim() !== "").length;
             document.getElementById('stat-valid').innerText = valid;
         }
 
         // Login Siswa
-        function handleStudentLogin(e) {
+        async function handleStudentLogin(e) {
             e.preventDefault();
             const nisn = document.getElementById('nisn-input').value.trim();
             const dob = document.getElementById('dob-input').value;
             const errBox = document.getElementById('login-error');
+            const btn = document.getElementById('login-btn');
 
-            const student = students.find(s => s.nisn === nisn && s.dob === dob);
-            if (student) {
+            btn.innerText = "Memverifikasi...";
+            
+            const { data, error } = await supabaseClient
+                .from('students')
+                .select('*')
+                .eq('nisn', nisn)
+                .eq('dob', dob)
+                .single();
+
+            btn.innerText = "MASUK & CEK RAPOR";
+
+            if (data) {
                 errBox.classList.add('hidden');
                 document.getElementById('student-login-section').classList.add('hidden');
                 document.getElementById('student-dashboard').classList.remove('hidden');
-                document.getElementById('student-name-display').innerText = student.name;
-                document.getElementById('student-nisn-display').innerText = student.nisn;
-                document.getElementById('download-btn').href = student.pdfLink;
+                document.getElementById('student-name-display').innerText = data.name;
+                document.getElementById('student-nisn-display').innerText = data.nisn;
+                document.getElementById('download-btn').href = data.pdf_link;
             } else {
                 errBox.innerText = "Data tidak ditemukan! Periksa kembali NISN dan Tanggal Lahir Anda.";
                 errBox.classList.remove('hidden');
@@ -242,7 +263,7 @@
             document.getElementById('student-login-section').classList.remove('hidden');
         }
 
-        // Admin Login Modal
+        // Admin Login
         function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
         function closeAdminLogin() { 
             document.getElementById('admin-login-modal').classList.add('hidden'); 
@@ -257,8 +278,7 @@
                 closeAdminLogin();
                 document.getElementById('student-login-section').classList.add('hidden');
                 document.getElementById('admin-dashboard').classList.remove('hidden');
-                renderTable();
-                updateStats();
+                fetchStudents();
             } else {
                 document.getElementById('admin-error').classList.remove('hidden');
             }
@@ -269,16 +289,16 @@
             document.getElementById('student-login-section').classList.remove('hidden');
         }
 
-        // Manajemen Data Siswa
+        // Render Tabel Admin
         function renderTable() {
             const keyword = document.getElementById('search-box').value.toLowerCase();
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = "";
 
-            const filtered = students.filter(s => s.name.toLowerCase().includes(keyword) || s.nisn.includes(keyword));
+            const filtered = studentsCache.filter(s => s.name.toLowerCase().includes(keyword) || s.nisn.includes(keyword));
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-stone-400">Belum ada data siswa.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-stone-400">Belum ada data siswa di database.</td></tr>`;
                 return;
             }
 
@@ -290,57 +310,60 @@
                     <td class="p-3 font-medium text-stone-900">${s.name}</td>
                     <td class="p-3">${s.nisn}</td>
                     <td class="p-3">${s.dob}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${s.pdfLink ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${s.pdfLink ? 'Link Valid' : 'Kosong'}</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${s.pdf_link ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${s.pdf_link ? 'Link Valid' : 'Kosong'}</span></td>
                     <td class="p-3 text-right space-x-2">
-                        <button onclick="editStudent(${index})" class="text-teal-600 hover:underline">Edit</button>
-                        <button onclick="deleteStudent(${index})" class="text-red-600 hover:underline">Hapus</button>
+                        <button onclick="editStudent('${s.id}')" class="text-teal-600 hover:underline">Edit</button>
+                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:underline">Hapus</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function saveManualStudent(e) {
+        // Simpan / Tambah Data Manual ke Cloud
+        async function saveManualStudent(e) {
             e.preventDefault();
-            const idx = parseInt(document.getElementById('edit-index').value);
+            const id = document.getElementById('edit-id').value;
             const name = document.getElementById('m-name').value;
             const nisn = document.getElementById('m-nisn').value;
             const dob = document.getElementById('m-dob').value;
-            const pdfLink = document.getElementById('m-link').value;
+            const pdf_link = document.getElementById('m-link').value;
 
-            if (idx === -1) {
-                students.push({ name, nisn, dob, pdfLink });
+            if (!id) {
+                const { error } = await supabaseClient.from('students').insert([{ name, nisn, dob, pdf_link }]);
+                if (error) alert('Gagal menyimpan: ' + error.message);
             } else {
-                students[idx] = { name, nisn, dob, pdfLink };
-                document.getElementById('edit-index').value = -1;
+                const { error } = await supabaseClient.from('students').update({ name, nisn, dob, pdf_link }).eq('id', id);
+                if (error) alert('Gagal memperbarui: ' + error.message);
+                document.getElementById('edit-id').value = '';
                 document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
             }
 
-            saveData();
-            renderTable();
             e.target.reset();
+            fetchStudents();
         }
 
-        function editStudent(index) {
-            const s = students[index];
-            document.getElementById('edit-index').value = index;
+        function editStudent(id) {
+            const s = studentsCache.find(item => item.id == id);
+            if (!s) return;
+            document.getElementById('edit-id').value = s.id;
             document.getElementById('m-name').value = s.name;
             document.getElementById('m-nisn').value = s.nisn;
             document.getElementById('m-dob').value = s.dob;
-            document.getElementById('m-link').value = s.pdfLink;
+            document.getElementById('m-link').value = s.pdf_link;
             document.getElementById('form-title-text').innerText = "Edit Data Siswa";
         }
 
-        function deleteStudent(index) {
-            if (confirm("Yakin ingin menghapus data siswa ini?")) {
-                students.splice(index, 1);
-                saveData();
-                renderTable();
+        async function deleteStudent(id) {
+            if (confirm("Yakin ingin menghapus data siswa ini dari cloud?")) {
+                const { error } = await supabaseClient.from('students').delete().eq('id', id);
+                if (error) alert('Gagal menghapus: ' + error.message);
+                fetchStudents();
             }
         }
 
         function resetManualForm() {
-            document.getElementById('edit-index').value = -1;
+            document.getElementById('edit-id').value = '';
             document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
         }
 
@@ -354,44 +377,45 @@
             XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
         }
 
-        // Preview & Import Excel
-        function previewExcel(e) {
+        // Import Excel Massal ke Cloud
+        async function previewExcel(e) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = async function(evt) {
                 const data = new Uint8Array(evt.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
 
-                let addedCount = 0;
+                let batchData = [];
                 json.forEach(row => {
                     const name = row.NamaSiswa || row.nama || row.Name;
                     const nisn = String(row.NISN || row.nisn || '');
                     const dob = String(row.TanggalLahir || row.tanggal_lahir || row.dob || '');
-                    const pdfLink = row.LinkPDF || row.link_pdf || row.pdfLink || '';
+                    const pdf_link = row.LinkPDF || row.link_pdf || row.pdfLink || '';
 
                     if (name && nisn) {
-                        // Cek duplikat NISN
-                        const existing = students.find(s => s.nisn === nisn);
-                        if (!existing) {
-                            students.push({ name, nisn, dob, pdfLink });
-                            addedCount++;
-                        }
+                        batchData.push({ name, nisn, dob, pdf_link });
                     }
                 });
 
-                saveData();
-                renderTable();
-                alert(`Berhasil mengimpor ${addedCount} data siswa baru dari Excel!`);
+                if (batchData.length > 0) {
+                    const { error } = await supabaseClient.from('students').upsert(batchData, { onConflict: 'nisn' });
+                    if (error) {
+                        alert('Gagal import Excel: ' + error.message);
+                    } else {
+                        alert(`Berhasil mengimpor ${batchData.length} data siswa ke database cloud!`);
+                        fetchStudents();
+                    }
+                }
                 e.target.value = '';
             };
             reader.readAsArrayBuffer(file);
         }
 
-        updateStats();
+        // Inisialisasi awal
+        fetchStudents();
     </script>
 </body>
 </html>
