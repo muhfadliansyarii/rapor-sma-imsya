@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Rapor Bayangan - SMA IT Imam Syafii 2 Pekanbaru</title>
+    <title>Portal Rapor Penilaian Tengah Semester Ganjil - SMA IT Imam Syafii 2 Pekanbaru</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -36,13 +36,21 @@
     </header>
 
     <!-- KONTEN UTAMA -->
-    <main class="flex-grow flex items-center justify-center p-4">
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
         
+        <!-- SAMBUTAN / DESKRIPSI PORTAL -->
+        <div class="max-w-xl text-center mb-6 px-4">
+            <h2 class="text-sm font-semibold text-emerald-800 uppercase tracking-widest mb-1">SMA IT IMAM SYAFII 2 PEKANBARU</h2>
+            <p class="text-xs text-stone-600 leading-relaxed italic">
+                "Portal ini ditujukan bagi siswa dan orang tua untuk memantau perkembangan akademik secara real-time, aman, dan mudah."
+            </p>
+        </div>
+
         <!-- HALAMAN LOGIN SISWA -->
         <div id="student-login-section" class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden p-8">
             <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-emerald-900">CEK RAPOR BAYANGAN</h2>
-                <p class="text-sm text-stone-500 mt-1">Akses dan unduh rapor bayangan Anda dengan mudah secara online.</p>
+                <h3 class="text-lg font-bold text-emerald-900 leading-snug">PORTAL RAPOR PENILAIAN TENGAH SEMESTER GANJIL</h3>
+                <p class="text-xs text-stone-500 mt-2">Silakan masukkan NISN dan Tanggal Lahir untuk mengakses rapor.</p>
             </div>
 
             <form id="login-form" onsubmit="handleStudentLogin(event)" class="space-y-4">
@@ -74,8 +82,8 @@
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 text-left">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h4 class="font-bold text-stone-800 text-sm">Rapor Bayangan Semester Ini</h4>
-                        <p class="text-xs text-stone-500 mt-0.5">Dokumen resmi hasil evaluasi tengah/akhir semester.</p>
+                        <h4 class="font-bold text-stone-800 text-sm">Rapor Penilaian Tengah Semester Ganjil</h4>
+                        <p class="text-xs text-stone-500 mt-0.5">Dokumen resmi hasil evaluasi tengah semester.</p>
                     </div>
                     <span class="text-2xl">📄</span>
                 </div>
@@ -112,8 +120,8 @@
         <div id="admin-dashboard" class="hidden w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-stone-200 p-6 md:p-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b border-stone-200 gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-emerald-900">Dashboard Administrator (Cloud Database)</h2>
-                    <p class="text-xs text-stone-500">Kelola data siswa yang tersimpan secara online di Supabase.</p>
+                    <h2 class="text-xl font-bold text-emerald-900">Dashboard Administrator - PTS Ganjil</h2>
+                    <p class="text-xs text-stone-500">Kelola data siswa dan link rapor Penilaian Tengah Semester Ganjil.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="exportTemplateExcel()" class="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 py-2 rounded-lg font-medium border">
@@ -200,14 +208,12 @@
 
     <!-- KONEKSI SUPABASE & LOGIKA UTAMA -->
     <script>
-        // Kredensial Supabase Anda
         const SUPABASE_URL = "https://zhzfklogfcwkwfoqbaoj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_X9wgSWQKO3McfYA7p2YnEA_5rCFA0ei";
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let studentsCache = [];
 
-        // Ambil data dari database Supabase saat web dibuka
         async function fetchStudents() {
             const { data, error } = await supabaseClient.from('students').select('*').order('name', { ascending: true });
             if (error) {
@@ -225,7 +231,6 @@
             document.getElementById('stat-valid').innerText = valid;
         }
 
-        // Login Siswa
         async function handleStudentLogin(e) {
             e.preventDefault();
             const nisn = document.getElementById('nisn-input').value.trim();
@@ -263,7 +268,6 @@
             document.getElementById('student-login-section').classList.remove('hidden');
         }
 
-        // Admin Login
         function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
         function closeAdminLogin() { 
             document.getElementById('admin-login-modal').classList.add('hidden'); 
@@ -289,7 +293,6 @@
             document.getElementById('student-login-section').classList.remove('hidden');
         }
 
-        // Render Tabel Admin
         function renderTable() {
             const keyword = document.getElementById('search-box').value.toLowerCase();
             const tbody = document.getElementById('student-table-body');
@@ -320,7 +323,6 @@
             });
         }
 
-        // Simpan / Tambah Data Manual ke Cloud
         async function saveManualStudent(e) {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
@@ -367,7 +369,6 @@
             document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
         }
 
-        // Export Template Excel
         function exportTemplateExcel() {
             const ws = XLSX.utils.json_to_sheet([
                 { NamaSiswa: "Contoh Siswa", NISN: "0081234567", TanggalLahir: "2008-01-01", LinkPDF: "https://drive.google.com/..." }
@@ -377,7 +378,6 @@
             XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
         }
 
-        // Import Excel Massal ke Cloud
         async function previewExcel(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -414,7 +414,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Inisialisasi awal
         fetchStudents();
     </script>
 </body>
