@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Rapor Bayangan - SMA IT Imam Syafii 2 Pekanbaru</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-emerald-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-800 flex items-center justify-center font-bold text-amber-200 border border-amber-300">
+                    IS2
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl tracking-wide">SMA IT IMAM SYAFII 2 PEKANBARU</h1>
+                    <p class="text-xs text-amber-200 italic">“Islamic Modern School for Young Achievers”</p>
+                </div>
+            </div>
+            <div>
+                <button onclick="openAdminLogin()" class="text-xs bg-teal-700 hover:bg-teal-600 px-3 py-1.5 rounded text-amber-100 font-medium transition">
+                    Portal Admin Sekolah
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        
+        <!-- HALAMAN LOGIN SISWA -->
+        <div id="student-login-section" class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-emerald-900">CEK RAPOR BAYANGAN</h2>
+                <p class="text-sm text-stone-500 mt-1">Akses dan unduh rapor bayangan Anda dengan mudah secara online.</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleStudentLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1">NISN Siswa</label>
+                    <input type="text" id="nisn-input" required placeholder="Contoh: 0081234567" 
+                        class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-teal-600 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1">Tanggal Lahir</label>
+                    <input type="date" id="dob-input" required 
+                        class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-teal-600 focus:outline-none text-sm">
+                </div>
+                <div id="login-error" class="hidden text-red-600 text-xs text-center font-medium bg-red-50 p-2 rounded"></div>
+                <button type="submit" class="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-100 font-semibold rounded-lg shadow transition text-sm">
+                    MASUK & CEK RAPOR
+                </button>
+            </form>
+        </div>
+
+        <!-- HALAMAN DASHBOARD SISWA (TERSEMBUNYI AWALNYA) -->
+        <div id="student-dashboard" class="hidden w-full max-w-lg bg-white rounded-2xl shadow-xl border border-stone-200 p-8 text-center">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                🎓
+            </div>
+            <h2 id="student-name-display" class="text-xl font-bold text-emerald-900">Nama Siswa</h2>
+            <p class="text-xs text-stone-500 mt-1 mb-6">NISN: <span id="student-nisn-display" class="font-semibold">00000000</span></p>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 text-left">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-stone-800 text-sm">Rapor Bayangan Semester Ini</h4>
+                        <p class="text-xs text-stone-500 mt-0.5">Dokumen resmi hasil evaluasi tengah/akhir semester.</p>
+                    </div>
+                    <span class="text-2xl">📄</span>
+                </div>
+                <div class="mt-4">
+                    <a id="download-btn" href="#" target="_blank" class="block w-full text-center py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-medium rounded-lg text-sm transition shadow">
+                        UNDUH RAPOR PDF
+                    </a>
+                </div>
+            </div>
+
+            <button onclick="studentLogout()" class="text-xs text-stone-500 hover:text-red-600 underline font-medium">
+                Keluar dari Akun
+            </button>
+        </div>
+
+        <!-- MODAL LOGIN ADMIN -->
+        <div id="admin-login-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                <h3 class="font-bold text-lg text-emerald-900 mb-2">Login Administrator</h3>
+                <p class="text-xs text-stone-500 mb-4">Masukkan sandi khusus admin untuk mengelola data siswa.</p>
+                <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+                    <input type="password" id="admin-pass" required placeholder="Masukkan Sandi Admin" 
+                        class="w-full px-3 py-2 rounded border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-700">
+                    <div id="admin-error" class="hidden text-red-600 text-xs">Sandi salah!</div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button type="button" onclick="closeAdminLogin()" class="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded">Batal</button>
+                        <button type="submit" class="px-4 py-1.5 text-xs bg-emerald-800 text-white rounded hover:bg-emerald-900">Masuk</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- HALAMAN DASHBOARD ADMIN (TERSEMBUNYI) -->
+        <div id="admin-dashboard" class="hidden w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-stone-200 p-6 md:p-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b border-stone-200 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-emerald-900">Dashboard Administrator</h2>
+                    <p class="text-xs text-stone-500">Kelola data siswa dan link Google Drive rapor.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportTemplateExcel()" class="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-3 py-2 rounded-lg font-medium border">
+                        Download Template Excel
+                    </button>
+                    <button onclick="adminLogout()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg font-medium">
+                        Logout Admin
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATISTIK KECIL -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+                    <p class="text-xs text-emerald-700 font-semibold uppercase">Total Siswa Terdaftar</p>
+                    <p id="stat-total" class="text-2xl font-bold text-emerald-900 mt-1">0</p>
+                </div>
+                <div class="bg-teal-50 border border-teal-200 p-4 rounded-xl">
+                    <p class="text-xs text-teal-700 font-semibold uppercase">Rapor Link Valid</p>
+                    <p id="stat-valid" class="text-2xl font-bold text-teal-900 mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- IMPORT EXCEL & TAMBAH MANUAL -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                    <h3 class="font-bold text-sm text-stone-800 mb-2">Import Data dari Excel (.xlsx / .csv)</h3>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" onchange="previewExcel(event)"
+                        class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 mb-2">
+                    <p class="text-[11px] text-stone-500 italic">Kolom wajib: Nama Siswa, NISN, Tanggal Lahir (YYYY-MM-DD), Link PDF</p>
+                </div>
+
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                    <h3 class="font-bold text-sm text-stone-800 mb-2" id="form-title-text">Tambah Siswa Manual</h3>
+                    <form onsubmit="saveManualStudent(event)" class="space-y-2">
+                        <input type="hidden" id="edit-index" value="-1">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="m-name" required placeholder="Nama Lengkap" class="px-3 py-1.5 rounded border text-xs">
+                            <input type="text" id="m-nisn" required placeholder="NISN" class="px-3 py-1.5 rounded border text-xs">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="m-dob" required class="px-3 py-1.5 rounded border text-xs">
+                            <input type="url" id="m-link" required placeholder="Link Google Drive PDF" class="px-3 py-1.5 rounded border text-xs">
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button type="button" onclick="resetManualForm()" class="px-3 py-1 text-xs bg-stone-200 rounded">Batal</button>
+                            <button type="submit" class="px-3 py-1 text-xs bg-emerald-800 text-white rounded">Simpan Data</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TABEL DATA SISWA -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-sm text-stone-800">Daftar Data Siswa</h3>
+                    <input type="text" id="search-box" oninput="renderTable()" placeholder="Cari nama / NISN..." class="px-3 py-1.5 text-xs rounded border border-stone-300 w-60">
+                </div>
+                <div class="overflow-x-auto border border-stone-200 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-stone-100 text-stone-700 border-b border-stone-200">
+                                <th class="p-3">No</th>
+                                <th class="p-3">Nama Siswa</th>
+                                <th class="p-3">NISN</th>
+                                <th class="p-3">Tanggal Lahir</th>
+                                <th class="p-3">Status Rapor</th>
+                                <th class="p-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-table-body">
+                            <!-- Data dimuat dinamis -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-stone-100 border-t border-stone-200 text-center py-4 text-xs text-stone-500">
+        &copy; 2026 SMA IT Imam Syafii 2 Pekanbaru. All rights reserved.
+    </footer>
+
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        // Database lokal (menggunakan localStorage)
+        let students = JSON.parse(localStorage.getItem('smait_students')) || [
+            { name: "Ahmad Fauzan", nisn: "0081234561", dob: "2008-05-12", pdfLink: "https://drive.google.com/file/d/sample1/view" },
+            { name: "Fatimah Azzahra", nisn: "0081234562", dob: "2008-08-20", pdfLink: "https://drive.google.com/file/d/sample2/view" }
+        ];
+
+        function saveData() {
+            localStorage.setItem('smait_students', JSON.stringify(students));
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').innerText = students.length;
+            const valid = students.filter(s => s.pdfLink && s.pdfLink.trim() !== "").length;
+            document.getElementById('stat-valid').innerText = valid;
+        }
+
+        // Login Siswa
+        function handleStudentLogin(e) {
+            e.preventDefault();
+            const nisn = document.getElementById('nisn-input').value.trim();
+            const dob = document.getElementById('dob-input').value;
+            const errBox = document.getElementById('login-error');
+
+            const student = students.find(s => s.nisn === nisn && s.dob === dob);
+            if (student) {
+                errBox.classList.add('hidden');
+                document.getElementById('student-login-section').classList.add('hidden');
+                document.getElementById('student-dashboard').classList.remove('hidden');
+                document.getElementById('student-name-display').innerText = student.name;
+                document.getElementById('student-nisn-display').innerText = student.nisn;
+                document.getElementById('download-btn').href = student.pdfLink;
+            } else {
+                errBox.innerText = "Data tidak ditemukan! Periksa kembali NISN dan Tanggal Lahir Anda.";
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        function studentLogout() {
+            document.getElementById('login-form').reset();
+            document.getElementById('student-dashboard').classList.add('hidden');
+            document.getElementById('student-login-section').classList.remove('hidden');
+        }
+
+        // Admin Login Modal
+        function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
+        function closeAdminLogin() { 
+            document.getElementById('admin-login-modal').classList.add('hidden'); 
+            document.getElementById('admin-pass').value = '';
+            document.getElementById('admin-error').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === "Imamsyafii2@") {
+                closeAdminLogin();
+                document.getElementById('student-login-section').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                renderTable();
+                updateStats();
+            } else {
+                document.getElementById('admin-error').classList.remove('hidden');
+            }
+        }
+
+        function adminLogout() {
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('student-login-section').classList.remove('hidden');
+        }
+
+        // Manajemen Data Siswa
+        function renderTable() {
+            const keyword = document.getElementById('search-box').value.toLowerCase();
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = "";
+
+            const filtered = students.filter(s => s.name.toLowerCase().includes(keyword) || s.nisn.includes(keyword));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-stone-400">Belum ada data siswa.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach((s, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-stone-100 hover:bg-stone-50";
+                tr.innerHTML = `
+                    <td class="p-3">${index + 1}</td>
+                    <td class="p-3 font-medium text-stone-900">${s.name}</td>
+                    <td class="p-3">${s.nisn}</td>
+                    <td class="p-3">${s.dob}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${s.pdfLink ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${s.pdfLink ? 'Link Valid' : 'Kosong'}</span></td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="editStudent(${index})" class="text-teal-600 hover:underline">Edit</button>
+                        <button onclick="deleteStudent(${index})" class="text-red-600 hover:underline">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveManualStudent(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('edit-index').value);
+            const name = document.getElementById('m-name').value;
+            const nisn = document.getElementById('m-nisn').value;
+            const dob = document.getElementById('m-dob').value;
+            const pdfLink = document.getElementById('m-link').value;
+
+            if (idx === -1) {
+                students.push({ name, nisn, dob, pdfLink });
+            } else {
+                students[idx] = { name, nisn, dob, pdfLink };
+                document.getElementById('edit-index').value = -1;
+                document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
+            }
+
+            saveData();
+            renderTable();
+            e.target.reset();
+        }
+
+        function editStudent(index) {
+            const s = students[index];
+            document.getElementById('edit-index').value = index;
+            document.getElementById('m-name').value = s.name;
+            document.getElementById('m-nisn').value = s.nisn;
+            document.getElementById('m-dob').value = s.dob;
+            document.getElementById('m-link').value = s.pdfLink;
+            document.getElementById('form-title-text').innerText = "Edit Data Siswa";
+        }
+
+        function deleteStudent(index) {
+            if (confirm("Yakin ingin menghapus data siswa ini?")) {
+                students.splice(index, 1);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function resetManualForm() {
+            document.getElementById('edit-index').value = -1;
+            document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
+        }
+
+        // Export Template Excel
+        function exportTemplateExcel() {
+            const ws = XLSX.utils.json_to_sheet([
+                { NamaSiswa: "Contoh Siswa", NISN: "0081234567", TanggalLahir: "2008-01-01", LinkPDF: "https://drive.google.com/..." }
+            ]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "TemplateSiswa");
+            XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
+        }
+
+        // Preview & Import Excel
+        function previewExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                let addedCount = 0;
+                json.forEach(row => {
+                    const name = row.NamaSiswa || row.nama || row.Name;
+                    const nisn = String(row.NISN || row.nisn || '');
+                    const dob = String(row.TanggalLahir || row.tanggal_lahir || row.dob || '');
+                    const pdfLink = row.LinkPDF || row.link_pdf || row.pdfLink || '';
+
+                    if (name && nisn) {
+                        // Cek duplikat NISN
+                        const existing = students.find(s => s.nisn === nisn);
+                        if (!existing) {
+                            students.push({ name, nisn, dob, pdfLink });
+                            addedCount++;
+                        }
+                    }
+                });
+
+                saveData();
+                renderTable();
+                alert(`Berhasil mengimpor ${addedCount} data siswa baru dari Excel!`);
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        updateStats();
+    </script>
+</body>
+</html>
