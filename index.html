@@ -378,6 +378,7 @@
             XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
         }
 
+        // Import Excel yang Aman (Tanpa Conflict Error)
         async function previewExcel(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -388,27 +389,29 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
 
-                let batchData = [];
-                json.forEach(row => {
+                let successCount = 0;
+                for (let row of json) {
                     const name = row.NamaSiswa || row.nama || row.Name;
                     const nisn = String(row.NISN || row.nisn || '');
                     const dob = String(row.TanggalLahir || row.tanggal_lahir || row.dob || '');
                     const pdf_link = row.LinkPDF || row.link_pdf || row.pdfLink || '';
 
                     if (name && nisn) {
-                        batchData.push({ name, nisn, dob, pdf_link });
-                    }
-                });
-
-                if (batchData.length > 0) {
-                    const { error } = await supabaseClient.from('students').upsert(batchData, { onConflict: 'nisn' });
-                    if (error) {
-                        alert('Gagal import Excel: ' + error.message);
-                    } else {
-                        alert(`Berhasil mengimpor ${batchData.length} data siswa ke database cloud!`);
-                        fetchStudents();
+                        // Cek apakah NISN sudah ada di database
+                        const existing = studentsCache.find(s => s.nisn === nisn);
+                        if (existing) {
+                            // Update jika sudah ada
+                            await supabaseClient.from('students').update({ name, dob, pdf_link }).eq('nisn', nisn);
+                        } else {
+                            // Insert jika belum ada
+                            await supabaseClient.from('students').insert([{ name, nisn, dob, pdf_link }]);
+                        }
+                        successCount++;
                     }
                 }
+
+                alert(`Berhasil memproses ${successCount} data siswa dari Excel!`);
+                fetchStudents();
                 e.target.value = '';
             };
             reader.readAsArrayBuffer(file);
