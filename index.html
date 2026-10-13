@@ -174,10 +174,15 @@
                 </div>
             </div>
 
-            <!-- TABEL DATA -->
+            <!-- TABEL DATA & TOMBOL HAPUS SEMUA -->
             <div>
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-sm text-stone-800">Daftar Data Siswa di Cloud</h3>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 gap-2">
+                    <div class="flex items-center gap-3">
+                        <h3 class="font-bold text-sm text-stone-800">Daftar Data Siswa di Cloud</h3>
+                        <button onclick="deleteAllStudents()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium shadow transition">
+                            Hapus Semua Data
+                        </button>
+                    </div>
                     <input type="text" id="search-box" oninput="renderTable()" placeholder="Cari nama / NISN..." class="px-3 py-1.5 text-xs rounded border border-stone-300 w-60 bg-white">
                 </div>
                 <div class="overflow-x-auto border border-stone-200 rounded-xl bg-white">
@@ -364,6 +369,29 @@
             }
         }
 
+        // Fitur Hapus Semua Data
+        async function deleteAllStudents() {
+            if (studentsCache.length === 0) {
+                alert("Tidak ada data siswa untuk dihapus.");
+                return;
+            }
+            if (confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA data siswa dari database cloud? Tindakan ini tidak dapat dibatalkan!")) {
+                const passwordKonfirmasi = prompt("Ketik ulang sandi admin (Imamsyafii2@) untuk konfirmasi:");
+                if (passwordKonfirmasi === "Imamsyafii2@") {
+                    // Hapus semua baris di tabel students
+                    const { error } = await supabaseClient.from('students').delete().neq('id', 0);
+                    if (error) {
+                        alert('Gagal menghapus semua data: ' + error.message);
+                    } else {
+                        alert('Semua data siswa berhasil dihapus dari database.');
+                        fetchStudents();
+                    }
+                } else if (passwordKonfirmasi !== null) {
+                    alert("Sandi konfirmasi salah! Penghapusan dibatalkan.");
+                }
+            }
+        }
+
         function resetManualForm() {
             document.getElementById('edit-id').value = '';
             document.getElementById('form-title-text').innerText = "Tambah Siswa Manual";
@@ -378,7 +406,6 @@
             XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
         }
 
-        // Import Excel yang Aman (Tanpa Conflict Error)
         async function previewExcel(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -397,13 +424,10 @@
                     const pdf_link = row.LinkPDF || row.link_pdf || row.pdfLink || '';
 
                     if (name && nisn) {
-                        // Cek apakah NISN sudah ada di database
                         const existing = studentsCache.find(s => s.nisn === nisn);
                         if (existing) {
-                            // Update jika sudah ada
                             await supabaseClient.from('students').update({ name, dob, pdf_link }).eq('nisn', nisn);
                         } else {
-                            // Insert jika belum ada
                             await supabaseClient.from('students').insert([{ name, nisn, dob, pdf_link }]);
                         }
                         successCount++;
